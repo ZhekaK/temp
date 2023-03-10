@@ -1,0 +1,46 @@
+using System;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
+
+namespace evs_cs
+{
+    class Program
+    {
+        [DllImport("EVS_dll.dll")]
+        public static extern int EnhVision(int iChanNum, IntPtr pFrame_in, int iWidth_in, int iHeight_in, IntPtr pFrame_out, int iWidth_out, int iHeight_out);
+        static void Main(string[] args)
+        {
+            ImageCodecInfo myImageCodecInfo;
+            Encoder myEncoder;
+            EncoderParameter myEncoderParameter;
+            EncoderParameters myEncoderParameters;
+
+            Bitmap Frame = new Bitmap("3.bmp");
+            BitmapData FrameBmpData = Frame.LockBits(new Rectangle(0, 0, Frame.Width, Frame.Height), ImageLockMode.ReadWrite, Frame.PixelFormat);
+            int iERR = EnhVision(0, FrameBmpData.Scan0, Frame.Width, Frame.Height, FrameBmpData.Scan0, Frame.Width, Frame.Height);
+            Frame.UnlockBits(FrameBmpData);
+
+            myEncoder = Encoder.Quality;
+
+            myImageCodecInfo = GetEncoderInfo("image/jpeg");
+
+            myEncoderParameters = new EncoderParameters(1);
+            myEncoderParameter = new EncoderParameter(myEncoder, 25L);
+            myEncoderParameters.Param[0] = myEncoderParameter;
+            Frame.Save("new.jpg", myImageCodecInfo, myEncoderParameters);
+        }
+        private static ImageCodecInfo GetEncoderInfo(String mimeType)
+        {
+            int j;
+            ImageCodecInfo[] encoders;
+            encoders = ImageCodecInfo.GetImageEncoders();
+            for (j = 0; j < encoders.Length; ++j)
+            {
+                if (encoders[j].MimeType == mimeType)
+                    return encoders[j];
+            }
+            return null;
+        }
+    }
+}
